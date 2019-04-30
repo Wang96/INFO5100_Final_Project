@@ -1,0 +1,168 @@
+<html>
+<head>
+<title>Project2</title>
+
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://d3js.org/topojson.v2.min.js"></script>
+<link rel="stylesheet" href="./style.css">
+
+<select class="gender">
+  <option value="">Gender</option>
+  <option value="1">Male</option>
+  <option value="0">Female</option>
+</select>
+
+<select class="age">
+  <option value="">Age</option>
+  <option value="15">15</option>
+  <option value="16">16</option>
+  <option value="17">17</option>
+  <option value="18">18</option>
+  <option value="19">19</option>
+  <option value="20">20</option>
+  <option value="21">21</option>
+  <option value="22">22</option>
+  <option value="23">23</option>
+  <option value="24">24</option>
+  <option value="25">25</option>
+  <option value="26">26</option>
+  <option value="27">27</option>
+  <option value="28">28</option>
+  <option value="29">29</option>
+  <option value="30">30</option>
+</select>
+
+<select id="major">
+  <option value="">Major</option>
+  <option value="Accounting">Accounting</option>
+  <option value="Aerospace Engineering">Aerospace Engineering</option>
+  <option value="Agriculture">Agriculture</option>
+  <option value="Anthropology">Anthropology</option>
+  <option value="Architecture">Architecture</option>
+  <option value="Art History">Art History</option>
+  <option value="Biology">Biology</option>
+  <option value="Business Management">Business Management</option>
+  <option value="Chemical Engineering">Chemical Engineering</option>
+  <option value="Chemistry">Chemistry</option>
+  <option value="Civil Engineering">Civil Engineering</option>
+  <option value="Communications">Communications</option>
+  <option value="Computer Engineering">Computer Engineering</option>
+  <option value="Computer Science">Computer Science</option>
+  <option value="Construction">Construction</option>
+  <option value="Criminal Justice">Criminal Justice</option>
+  <option value="Drama">Drama</option>
+  <option value="Economics">Economics</option>
+  <option value="Education">Education</option>
+  <option value="Electrical Engineering">Electrical Engineering</option>
+  <option value="English">English</option>
+  <option value="Film">Film</option>
+  <option value="Finance">Finance</option>
+  <option value="Forestry">Forestry</option>
+  <option value="Geography">Geography</option>
+  <option value="Geology">Geology</option>
+  <option value="Graphic Design">Graphic Design</option>
+  <option value="Health Care Administration">Health Care Administration</option>
+  <option value="History">History</option>
+  <option value="Hospitality & Tourism">Hospitality & Tourism</option>
+  <option value="Industrial Engineering">Industrial Engineering</option>
+  <option value="Information Technology (IT)">Information Technology (IT)</option>
+  <option value="Interior Design">Interior Design</option>
+  <option value="International Relations">International Relations</option>
+  <option value="Journalism">Journalism</option>
+  <option value="Management Information Systems (MIS)">Management Information Systems (MIS)</option>
+  <option value="Marketing">Marketing</option>
+  <option value="Math">Math</option>
+  <option value="Mechanical Engineering">Mechanical Engineering</option>
+  <option value="Music">Music</option>
+  <option value="Nursing">Nursing</option>
+  <option value="Nutrition">Nutrition</option>
+  <option value="Philosophy">Philosophy</option>
+  <option value="Physician Assistant">Physician Assistant</option>
+  <option value="Physics">Physics</option>
+  <option value="Political Science">Political Science</option>
+  <option value="Psychology">Psychology</option>
+  <option value="Religion">Religion</option>
+  <option value="Sociology">Sociology</option>
+  <option value="Spanish">Spanish</option>
+</select>
+
+<svg id = "piechart" height = 200 width = 200 style = "background: white">
+</svg>
+
+
+
+<script>
+    var selector = document.getElementById('major');
+    selector.addEventListener("change", function(){
+      var value = selector[selector.selectedIndex].value;
+      console.log(value);
+    });
+
+    const requestData = async () => {
+
+      // Drawing basic us map
+      const pie = await d3.json("./dataset/pie.json");
+
+      // Creat pie chart of energy breakdown for selected state
+
+      var color = d3.scaleOrdinal(d3.schemePastel1);
+      var tmp = {}
+
+      function createPieChart(data, type){
+        console.log(data);
+        d3.select('#piechart').selectAll('g').remove();
+        data.forEach( d => {
+          tmp[d.category] = d.value;
+        })
+        console.log(tmp);
+        var svg = d3.select("#piechart");
+        var width = svg.attr("width");
+        var height = svg.attr("height");
+        var radius = Math.min(width, height) / 2;
+        var pie = d3.pie().value(function(d) {return d.value})(data);
+        var arc = d3.arc().outerRadius(radius-10).innerRadius(50);
+        var labelArc = d3.arc().outerRadius(radius-40).innerRadius(radius-40);
+        var chart = svg.append("g").attr("transform", "translate("+width/2+","+height/2+")");
+        var g = chart.selectAll("arc").data(pie).enter().append("g").attr("class","arc").attr("note", d => d.data.category);
+        g.append("path").attr("d",arc).style("fill", function(d) {return color(d.data.category);});
+        g.append("text").text(type).style("text-anchor", "middle").style("fill","black").style("font-size",25);
+        d3.select("#piechart").selectAll("g").selectAll(".arc");
+          // .on("mouseover", function(){
+          //   let category = d3.select(this).attr("note");
+          //   d3.select("#piechart").append("text")
+          //     .attr("id", category.replace(/[ _\-,.:'#!\?]/g,""))
+          //     .attr("x", 135)
+          //     .attr("y", 25)
+          //     .text(category)
+          //     .style("fill", "black");
+          //
+          //   d3.select("#piechart").append("text")
+          //     .attr("id", "category_value")
+          //     .attr("x", 135)
+          //     .attr("y", 45)
+          //     .text((data[category]*100).toFixed(2) + '%')
+          //     .style("fill", "black");
+          //
+          //   d3.select(this).style("opacity",0.5);
+          // })
+          // .on("mouseout", function(){
+          //   let category = d3.select(this).attr("note");
+          //   d3.select(this).style("opacity",1);
+          //   d3.select("#" + category.replace(/[ _\-,.:'#!\?]/g,"")).remove();
+          //   d3.select("#category_value").remove();
+          // });
+      }
+      createPieChart(pie["20 female"]["music"]["country"], "country")
+
+    }
+
+    requestData();
+
+
+
+
+
+</script>
+
+</head>
+</html>

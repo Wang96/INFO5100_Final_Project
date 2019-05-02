@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+<style>
+        p{
+            font-family: "Montserrat", sans-serif;
+            font-size: 0.8333vw;
+            margin: 1vw;
+            line-height: 2;
+        }
+        div {
+            display: flex; 
+            justify-content: center; 
+        }
+        svg {
+        font-family: "Montserrat", sans-serif;
+        font-size: 0.694vw;
+        margin: auto;
+        }
+</style>
+<body>
+  <div>
+    <svg id ="Chart"></svg>
+  </div>
+</body>
+<script>
+  var width = 975;
+  var height = width;
+  var innerRadius = 300;
+  var outerRadius = Math.min(width, height) / 2;
+  var analysis = [];
+  Promise.all([d3.json("./response.json",d3.autoType),d3.json("./major.json",d3.autoType)]).then(function (data){
+    console.log(data[0]);//48
+    for(let key in data[0])
+    {
+      if (key == '16 male'){
+        for (let subkey in data[0][key])
+            for (let subtitle in data[0][key][subkey])  
+            analysis.push({
+              "Category": subtitle,
+              "Number": data[0][key][subkey][subtitle]
+            });
+      }
+    }
+    arc = d3.arc()
+             .innerRadius(d => y(0))
+            // .outerRadius(d => y(d.Number))
+            .startAngle(d => x(d.Category))
+            .endAngle(d => x(d.Category) + x.bandwidth())
+            .padAngle(0.01)
+            .padRadius(innerRadius)
+    x = d3.scaleBand()
+          .domain(analysis.map(d => d.Category))
+          .range([0, 2 * Math.PI])
+          .align(0)
+    console.log(x('cars'));
+    y = function(d){
+        const y = d3.scaleLinear()
+                    .domain([0, d3.max(analysis, d => d.Number)])
+                    .range([innerRadius * innerRadius, outerRadius * outerRadius]);
+        return Math.sqrt(y(d));
+    }
+    z = d3.scaleOrdinal()
+          .domain(analysis.map(d => d.Category))
+          .range(["#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5", "#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6", "#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888", "#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b", "#a05d56", "#d0743c","#d0743c","#d0743c","#d0743c","#d0743c","#d0743c","#d0743c"])
+    console.log(z("cars"));
+    var svg2 = d3.select("#Chart")
+                .attr("viewBox", `${-width / 2} ${-height / 2} ${width} ${height}`)
+                .style("width", "60%")
+                .style("height", "auto")
+    seg = svg2.selectAll("path")
+    .data(analysis)
+    .enter().append("path")
+    .each(function(d) { d.outerRadius = y(0); })
+    .attr("d", arc)
+    .attr("fill", d => z(d.Category));
+
+    seg.transition().ease(d3.easeElastic).duration(1500).delay(function(d,i) {return (48-i)*90;})
+          .attrTween("d", function(d,index) {
+            var i = d3.interpolate(d.outerRadius, y(d.Number));
+            return function(t) { d.outerRadius = i(t); return arc(d); };
+          });
+
+    xAxis = g => g
+    .attr("text-anchor", "end")
+    .attr("dominant-baseline","central")
+    .call(g => g.selectAll("g")
+    .data(analysis)
+    .enter().append("g")
+    .style("fill","#FFFFFF")
+    .attr("transform", d => `rotate(${((x(d.Category) + x.bandwidth() / 2) * 180 / Math.PI - 90)}) translate(${innerRadius+4},0) rotate(90)`)
+    .call(g => g.append("text")
+    .attr("transform", d =>  "rotate(90) translate(0,0)")
+          .text(d => d.Category))) 
+
+    svg2.append("g")
+        .call(xAxis);
+  });
+
+  // d3.csv("./data.csv",d3.autoType,(d, _, columns) => {
+  //       let total = 0;
+  //       for (let i = 1; i < columns.length; ++i) total += d[columns[i]] = +d[columns[i]];
+  //       d.total = total;
+  //       return d;
+  //       })
+  //   .then(function(data) {
+  //   console.log(data);
+
+  //   arc = d3.arc()
+  //   .innerRadius(d => y(d[0]))
+  //   .outerRadius(d => y(d[1]))
+  //   .startAngle(d => x(d.data.State))
+  //   .endAngle(d => x(d.data.State) + x.bandwidth())
+  //   .padAngle(0.01)
+  //   .padRadius(innerRadius)
+
+  //   x = d3.scaleBand()
+  //   .domain(data.map(d => d.State))
+  //   .range([0, 2 * Math.PI])
+  //   .align(0)
+  //   console.log(x(d3.stack().keys(data.columns.slice(1))(data)[0][1].data.State))
+
+  //   y = function(d){
+  //   const y = d3.scaleLinear()
+  //     .domain([0, d3.max(data, d => d.total)])
+  //     .range([innerRadius * innerRadius, outerRadius * outerRadius]);
+  //   return Math.sqrt(y(d));
+  //   }
+  //   z = d3.scaleOrdinal()
+  //   .domain(data.columns.slice(1))
+  //   .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"])
+
+  //   var svg = d3.select("#RadialChart")
+  //               .attr("viewBox", `${-width / 2} ${-height / 2} ${width} ${height}`)
+  //               .style("width", "100%")
+  //               .style("height", "auto")
+  //   console.log(d3.stack().keys(data.columns.slice(1))(data));
+  //   svg.append("g")
+  //   .selectAll("g")
+  //   .data(d3.stack().keys(data.columns.slice(1))(data))
+  //   .enter().append("g")
+  //   .attr("fill", d => z(d.key))
+  //   .selectAll("path")
+  //   .data(d => d)
+  //   .enter().append("path")
+  //     .attr("d", arc);
+
+    
+  // });
+
+
+</script>
+</html>

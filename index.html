@@ -61,7 +61,7 @@
       #piechart{
         position:absolute;
         top:425px;
-        right:150px;
+        right:200px;
       }
       #legend{
         position:absolute;
@@ -72,6 +72,8 @@
 </style>
 </head>
 <body>
+  <h1>Predict your Life</h1>
+  <h2>See how people like you live</h2>
 
 <div class = "selections">
 
@@ -356,7 +358,7 @@
         var height = svg.attr("height");
         var radius = Math.min(width, height) / 2;
         var pie = d3.pie().value(function(d) {return d.value})(data);
-        var arc = d3.arc().outerRadius(radius-10).innerRadius(50);
+        var arc = d3.arc().outerRadius(radius-10).innerRadius(100);
         var labelArc = d3.arc().outerRadius(radius-40).innerRadius(radius-40);
         var chart = svg.append("g").attr("transform", "translate("+width/2+","+height/2+")");
         var g = chart.selectAll("arc").data(pie).enter().append("g").attr("class","arc").attr("note", d => d.data.category);

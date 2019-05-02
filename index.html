@@ -12,15 +12,12 @@
     font-size: 0.694vw;
     margin: auto;
     }
-    body {
-     background-image:linear-gradient(to bottom left, #28457a, #182a49,#0b1931);
-    }
 
     #majorlabel{
       font-family: "Montserrat", sans-serif;
       font-size: 12px;
       margin-right: 10px;
-      color:rgba(255, 255, 255, 0.75);
+      color: grey;
     }
 
     .x path{
@@ -56,7 +53,21 @@
           color:rgb(109, 167, 233);
           opacity: 0.75;
       }
-
+      #linechart{
+        position:absolute;
+        top:30px;
+        right:30px;
+      }
+      #piechart{
+        position:absolute;
+        top:425px;
+        right:150px;
+      }
+      #legend{
+        position:absolute;
+        top:400px;
+        right:0px;
+      }
 
 </style>
 </head>
@@ -95,70 +106,15 @@
       </div>
     </div>
 
-<!-- 
-  <select id="major">
-    <option value="">Major</option>
-    <option value="Accounting">Accounting</option>
-    <option value="Aerospace Engineering">Aerospace Engineering</option>
-    <option value="Agriculture">Agriculture</option>
-    <option value="Anthropology">Anthropology</option>
-    <option value="Architecture">Architecture</option>
-    <option value="Art History">Art History</option>
-    <option value="Biology">Biology</option>
-    <option value="Business Management">Business Management</option>
-    <option value="Chemical Engineering">Chemical Engineering</option>
-    <option value="Chemistry">Chemistry</option>
-    <option value="Civil Engineering">Civil Engineering</option>
-    <option value="Communications">Communications</option>
-    <option value="Computer Engineering">Computer Engineering</option>
-    <option value="Computer Science">Computer Science</option>
-    <option value="Construction">Construction</option>
-    <option value="Criminal Justice">Criminal Justice</option>
-    <option value="Drama">Drama</option>
-    <option value="Economics">Economics</option>
-    <option value="Education">Education</option>
-    <option value="Electrical Engineering">Electrical Engineering</option>
-    <option value="English">English</option>
-    <option value="Film">Film</option>
-    <option value="Finance">Finance</option>
-    <option value="Forestry">Forestry</option>
-    <option value="Geography">Geography</option>
-    <option value="Geology">Geology</option>
-    <option value="Graphic Design">Graphic Design</option>
-    <option value="Health Care Administration">Health Care Administration</option>
-    <option value="History">History</option>
-    <option value="Hospitality & Tourism">Hospitality & Tourism</option>
-    <option value="Industrial Engineering">Industrial Engineering</option>
-    <option value="Information Technology (IT)">Information Technology (IT)</option>
-    <option value="Interior Design">Interior Design</option>
-    <option value="International Relations">International Relations</option>
-    <option value="Journalism">Journalism</option>
-    <option value="Management Information Systems (MIS)">Management Information Systems (MIS)</option>
-    <option value="Marketing">Marketing</option>
-    <option value="Math">Math</option>
-    <option value="Mechanical Engineering">Mechanical Engineering</option>
-    <option value="Music">Music</option>
-    <option value="Nursing">Nursing</option>
-    <option value="Nutrition">Nutrition</option>
-    <option value="Philosophy">Philosophy</option>
-    <option value="Physician Assistant">Physician Assistant</option>
-    <option value="Physics">Physics</option>
-    <option value="Political Science">Political Science</option>
-    <option value="Psychology">Psychology</option>
-    <option value="Religion">Religion</option>
-    <option value="Sociology">Sociology</option>
-    <option value="Spanish">Spanish</option>
-  </select> -->
-
 </div>
 
 <div class = "chart">
-  <svg id = "piechart" height = 200 width = 200 style = "background: white">
+  <svg id = "piechart" height = 350 width = 350 style = "background: white">
   </svg>
-  <svg id = "legend" height = 200 width = 200 style = "background:white">
+  <svg id = "legend" height = 200 width = 200>
   </svg>
 </div>
-<svg id="linechart" height=460 width=780></svg>
+<svg id="linechart" height=360 width=680></svg>
 
 <script>
 
@@ -209,8 +165,8 @@
             .style("text-anchor", "middle")
             .text("Salary")
             .style("font-size", 14)
-            .style("fill", "white")
-            .style("opacity",0.75);
+            .style("fill", "black")
+            // .style("opacity",0.75);
 
             axis.append("text")
             .attr("transform", "rotate(-90)")
@@ -218,8 +174,8 @@
             .attr("x",0 - (height / 2))
             .text("Percentage")
             .style("font-size", 14)
-            .style("fill", "white")
-            .style("opacity",0.75);
+            .style("fill", "black")
+            // .style("opacity",0.75);
 
             var majordrop = d3.select("#majordropdown")
 
@@ -302,7 +258,7 @@
                      .attr("y2", percenty)
                      .attr("x1", xScale(median))
                      .attr("x2", xScale(median))
-                     .style("stroke", "white")
+                     .style("stroke", "grey")
                      .attr("transform","translate("+margin.left+","+margin.top+")");
 
                 focus.append("text")
@@ -310,7 +266,7 @@
                 .attr("x", xScale(median)-15)
                 .attr("y", percenty - 20)
                 .text("Median Mid-Career Salary:")
-                .attr("fill","white")
+                .attr("fill","black")
                 .attr("font-size",14)
 
                 focus.append("text")
@@ -318,7 +274,7 @@
                 .attr("x", xScale(median)+28)
                 .attr("y", percenty+ 10)
                 .text("$" + medianComma)
-                .attr("fill","white")
+                .attr("fill","black")
                 .attr("font-size",22)
 
                };
@@ -341,14 +297,14 @@
       // Drawing basic us map
       const pie = await d3.json("./dataset/pie.json");
 
-      var major = '';
-      var age = '';
-      var gender = '';
+      var major = 'Computer Science';
+      var age = '18';
+      var gender = 'female';
 
-      var majorselector = document.getElementById('major');
-      majorselector.addEventListener("change", function(){
-        major = majorselector[majorselector.selectedIndex].value;
-      });
+      // var majorselector = document.getElementById('major');
+      // majorselector.addEventListener("change", function(){
+      //   major = majorselector[majorselector.selectedIndex].value;
+      // });
 
       var ageselector = document.getElementById('age');
       ageselector.addEventListener("change", function(){

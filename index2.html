@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://d3js.org/topojson.v2.min.js"></script>
+</head>
+<style>
+
+        svg {
+        font-family: "Montserrat", sans-serif;
+        font-size: 0.694vw;
+        margin: auto;
+        }
+        body {
+         background-image:linear-gradient(to bottom left, #28457a, #182a49,#0b1931);
+        }
+        div {
+            display: flex;
+            justify-content: center;
+        }
+
+        #majorlabel{
+          font-family: "Montserrat", sans-serif;
+          font-size: 12px;
+          margin-right: 10px;
+          color:rgba(255, 255, 255, 0.75);
+        }
+
+        .x path{
+           stroke: rgb(109, 167, 233);
+           opacity: 0.75;
+         }
+
+         .x line{
+             stroke:rgb(109, 167, 233);
+             opacity: 0.75;
+           }
+
+         .x text{
+            font-family: "Montserrat", sans-serif;
+             font-size: 12px;
+             color:rgb(109, 167, 233);
+             opacity: 0.75;
+         }
+
+         .y path{
+            stroke: rgb(109, 167, 233);
+            opacity: 0.75;
+          }
+
+          .y line{
+              stroke:rgb(109, 167, 233);
+              opacity: 0.75;
+            }
+
+          .y text{
+            font-family: "Montserrat", sans-serif;
+              font-size: 12px;
+              color:rgb(109, 167, 233);
+              opacity: 0.75;
+          }
+
+
+</style>
+<body>
+  <div id = "majordropdown">
+    <div id = "majorlabel">Select Your Undergraduate Major
+    </div>
+  </div>
+  <svg id="linechart" height=460 width=780></svg>
+
+</body>
+<script>
+    d3.dsv(",","major-salaries.csv",function(d) {
+         return {
+           major: d.major,
+           values: [+d.percentile10, +d.percentile25, +d.median, +d.percentile75, +d.percentile90]
+         };
+       })
+       .then(function(data) {
+         let Salaries = data
+         console.log(Salaries);
+
+         var percents = [0.1, 0.25, 0.5, 0.25, 0.1];
+
+           let axis = d3.select("svg#linechart");
+           let width = axis.attr("width");
+           let height = axis.attr("height");
+           let margin = { "top": 20, "right": 40, "bottom": 50, "left":70};
+           let chartWidth = width - margin.left - margin.right;
+           let chartHeight = height - margin.top - margin.bottom;
+           var xScale=d3.scaleLinear().domain([0,250000]).range([0,chartWidth]);
+           var yScale=d3.scaleLinear().domain([0.1,0.6]).range([chartHeight,0]);
+           var x = d3.scaleLinear().range([0, chartWidth]);
+           var y = d3.scaleLinear().range([chartHeight, 0]);
+           let leftAxis = d3.axisLeft(yScale).ticks(5).tickFormat(d3.format(".0%"));
+
+
+
+           // Y axis
+           axis.append("g").attr("class", "y axis")
+           .attr("transform","translate("+ margin.left +","+ margin.top +")")
+           .call(leftAxis);
+
+           // X axis
+            let bottomAxis = d3.axisBottom(xScale).ticks(5).tickFormat(function(d) { return "$" + d3.format(",")(d) } ); // Making simpler ticks without the e
+            // Check out http://bl.ocks.org/zanarmstrong/05c1e95bf7aa16c4768
+            let element = axis.append("g").attr("class", "x axis")
+            .attr("transform","translate("+ margin.left +","+ (margin.top + chartHeight ) +")");
+            bottomAxis(element); // Same as .call
+
+            axis.append("text")
+            .attr("transform",
+            "translate("+width/2+","+(chartHeight+margin.top+40)+")")
+            .style("text-anchor", "middle")
+            .text("Salary")
+            .style("font-size", 14)
+            .style("fill", "white")
+            .style("opacity",0.75);
+
+            axis.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", margin.left - 50)
+            .attr("x",0 - (height / 2))
+            .text("Percentage")
+            .style("font-size", 14)
+            .style("fill", "white")
+            .style("opacity",0.75);
+
+            var majordrop = d3.select("#majordropdown")
+
+            majordrop.append("select").selectAll("option").attr('class','select')
+                .data(Salaries)
+                .attr("id", "majordrop")
+                .enter()
+                .append("option")
+                .attr("value", function(d){
+                    return d.major;
+                })
+                .text(function(d){
+                    return d.major;
+            });
+
+            var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+            // Source : https://bl.ocks.org/ProQuestionAsker/8382f70af7f4a7355827c6dc4ee8817d
+            //Source : http://next.plnkr.co/edit/qW77DpbScddXraajNFet?p=preview&preview
+
+            var updateGraph = function(major){
+              var selectMajor = Salaries.filter(function(d){
+                              return d.major == major;
+                            })
+                console.log(selectMajor);
+                var selectValues = selectMajor[0]["values"];
+                var format= d3.format(",")
+                var median = d3.median(selectValues);
+                var medianComma = format(d3.median(selectValues));
+                var medianX = xScale(median);
+
+                console.log(medianX)
+                var percenty = yScale(0.50);
+
+                var line = d3.line()
+                 .x(function(d,i) { return xScale(d); })
+                 .y(function(d,i) { return yScale(percents[i]); })
+                 .curve(d3.curveStepBefore)
+                 .curve(d3.curveCatmullRom.alpha(1));
+
+
+
+
+                var g = axis.append("g").attr("class", "linedots");
+
+                var next = g.append("path")
+                .data(selectMajor)
+                  .attr("class", "line")
+                  .attr("d", function(d) {
+                    return line(d.values);
+                  })
+                  .style("stroke", function(d,i) {
+                    return color(i);
+                  })
+                  .style("stroke-width", 2)
+                  .attr("fill","none")
+                  .attr("transform","translate("+margin.left+","+margin.top+")");
+
+                function randomColor() {
+                  return "hsl(" + Math.random() * 360 + ",40%,50%)";
+                }
+
+
+                  d3.selectAll(".line")
+                  .style("stroke", randomColor)
+                  .transition()
+                  .duration(2000);
+
+                  d3.selectAll(".line")
+                  .style("fill", "rgba(255, 255, 255, 0.10)")
+                  .transition()
+                  .duration(2000);
+
+                  var focus = g.append("g")
+                     .attr("class", "focus")
+
+                 focus.append("line")
+                     .attr("class", "hover-line")
+                     .attr("y1", yScale(0.10))
+                     .attr("y2", percenty)
+                     .attr("x1", xScale(median))
+                     .attr("x2", xScale(median))
+                     .style("stroke", "white")
+                     .attr("transform","translate("+margin.left+","+margin.top+")");
+
+                focus.append("text")
+                .attr("class", "mediantext")
+                .attr("x", xScale(median)-15)
+                .attr("y", percenty - 20)
+                .text("Median Mid-Career Salary:")
+                .attr("fill","white")
+                .attr("font-size",14)
+
+                focus.append("text")
+                .attr("class", "median")
+                .attr("x", xScale(median)+28)
+                .attr("y", percenty+ 10)
+                .text("$" + medianComma)
+                .attr("fill","white")
+                .attr("font-size",22)
+
+               };
+
+            majordrop.on('change',function(d,i){
+            var clear = d3.select(".line").remove();
+            var clear2 = d3.select(".hover-line").remove();
+            var clear3 = d3.select(".median").remove();
+            var clear4 = d3.select(".mediantext").remove();
+            var selectedMajor = d3.select(this)
+                        .select("select")
+                        .property("value");
+                  updateGraph(selectedMajor);
+            });
+
+                   });
+
+
+</script>
+</html>

@@ -301,11 +301,14 @@
 
                    });
 /************************ Pie Charts ************************************/
+    var ageselector = document.getElementById('age');
+    var genderselector = document.getElementById('gender');
 
     const requestData = async () => {
       // Drawing basic us map
-      const pie = await d3.json("./dataset/pie.json");
+      const pie_data = await d3.json("./dataset/pie.json");
 
+      var type = "romantic"
       var major = 'Computer Science';
       var age = '18';
       var gender = 'female';
@@ -315,32 +318,46 @@
       //   major = majorselector[majorselector.selectedIndex].value;
       // });
 
-      var ageselector = document.getElementById('age');
+
       ageselector.addEventListener("change", function(){
         age = ageselector[ageselector.selectedIndex].value;
         if(gender == ''){
           let tmpkey1 = age + " " + "female";
           let tmpkey2 = age + " " + "male";
-          let female = pie[tmpkey1]["romantic"];
-          let male = pie[tmpkey2]["romantic"];
+          let female = pie_data[tmpkey1][type];
+          let male = pie_data[tmpkey2][type];
           let tmpdata = []
           for(let i  = 0; i < female.length; i++){
             let v = (female[i].value + male[i].value) / 2;
             tmpdata.push({"category": female[i].category, "value": v});
           }
-          createPieChart(tmpdata, "romantic");
+          createPieChart(tmpdata, type);
         }
         else{
           let tmpkey = age + " " + gender;
-          createPieChart(pie[tmpkey]["romantic"], "romantic");
+          createPieChart(pie_data[tmpkey][type], type);
         }
       });
 
-      var genderselector = document.getElementById('gender');
+
       genderselector.addEventListener("change", function(){
         gender = genderselector[genderselector.selectedIndex].value;
-        let tmpkey = age + " " + gender;
-        createPieChart(pie[tmpkey]["romantic"], "romantic");
+        if(gender == ''){
+          let tmpkey1 = age + " " + "female";
+          let tmpkey2 = age + " " + "male";
+          let female = pie_data[tmpkey1][type];
+          let male = pie_data[tmpkey2][type];
+          let tmpdata = []
+          for(let i  = 0; i < female.length; i++){
+            let v = (female[i].value + male[i].value) / 2;
+            tmpdata.push({"category": female[i].category, "value": v});
+          }
+          createPieChart(tmpdata, type);
+        }
+        else{
+          let tmpkey = age + " " + gender;
+          createPieChart(pie_data[tmpkey][type], type);
+        }
       });
 
 
@@ -376,16 +393,18 @@
             let category = d3.select(this).attr("note");
             d3.select("#piechart").append("text")
               .attr("id", catmapping[category])
-              .attr("x", 135)
-              .attr("y", 25)
+              .attr("x", 240)
+              .attr("y", 35)
               .text(category)
+              .style("font-size",20)
               .style("fill", "black");
 
             d3.select("#piechart").append("text")
               .attr("id", "category_value")
-              .attr("x", 135)
-              .attr("y", 45)
+              .attr("x", 260)
+              .attr("y", 35)
               .text((tmp[category]*100).toFixed(2) + '%')
+              .style("font-size",20)
               .style("fill", "black");
 
             d3.select(this).style("opacity",0.5);
@@ -397,101 +416,173 @@
             d3.select("#category_value").remove();
           });
       }
-      createPieChart(pie["20 female"]["romantic"], "romantic");
+      createPieChart(pie_data[age+" "+gender][type], type);
 
       var legend = d3.select("#legend")
-      for(let i = 0; i < pie["20 female"]["romantic"].length; i++){
+      for(let i = 0; i < pie_data[age+" "+gender][type].length; i++){
         legend.append("rect")
               .attr("x", 20)
               .attr("y", 20+i*30)
               .attr("width", 25)
               .attr("height", 25)
-              .style("fill", color(pie["20 female"]["romantic"][i].category));
+              .style("fill", color(pie_data[age+" "+gender][type][i].category));
         legend.append("text")
               .attr("x", 60)
               .attr("y", i*30+40)
               .attr("height", 25)
-              .text(pie["20 female"]["romantic"][i].category)
+              .text(pie_data[age+" "+gender][type][i].category)
               .style("fill", "black");
               //.style("font-weight", "bold");
       }
 
+      /********************************************************/
+      var width = 975;
+      var height = width;
+      var innerRadius = 300;
+      var outerRadius = Math.min(width, height) / 2;
+      var analysis = [];
+
+      Promise.all([d3.json("./dataset/response.json",d3.autoType),d3.json("./dataset/major.json",d3.autoType)]).then(function (data){
+
+        console.log(data[0]);//48
+
+        function updateGraph(inputkey, second_key){
+          d3.select("#Chart").selectAll("*").remove();
+
+          if(second_key == ''){
+            for(let key in data[0])
+            {
+               if (key == inputkey){
+                for (let subkey in data[0][key])
+                    for (let subtitle in data[0][key][subkey])
+                      analysis.push({
+                        "Category": subtitle,
+                        "Number": data[0][key][subkey][subtitle]
+                      });
+              }
+            }
+          }
+
+          else{
+            for(let key in data[0])
+            {
+               if (key == inputkey){
+                for (let subkey in data[0][key])
+                    for (let subtitle in data[0][key][subkey])
+                      analysis.push({
+                        "Category": subtitle,
+                        "Number": (data[0][key][subkey][subtitle]+data[0][second_key][subkey][subtitle])/2
+                      });
+              }
+            }
+          }
+          console.log(analysis);
+
+          arc = d3.arc()
+                   .innerRadius(d => y(0))
+                  // .outerRadius(d => y(d.Number))
+                  .startAngle(d => x(d.Category))
+                  .endAngle(d => x(d.Category) + x.bandwidth())
+                  .padAngle(0.01)
+                  .padRadius(innerRadius)
+          x = d3.scaleBand()
+                .domain(analysis.map(d => d.Category))
+                .range([0, 2 * Math.PI])
+                .align(0)
+          console.log(x('cars'));
+          y = function(d){
+              const y = d3.scaleLinear()
+                          .domain([0, d3.max(analysis, d => d.Number)])
+                          .range([innerRadius * innerRadius, outerRadius * outerRadius]);
+              return Math.sqrt(y(d));
+          }
+          z = d3.scaleOrdinal()
+                .domain(analysis.map(d => d.Category))
+                .range(["#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5", "#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6", "#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888", "#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b", "#a05d56", "#d0743c","#d0743c","#d0743c","#d0743c","#d0743c","#d0743c","#d0743c"])
+          console.log(z("cars"));
+
+          var svg2 = d3.select("#Chart")
+                      .attr("viewBox", `${-width / 2} ${-height / 2} ${width} ${height}`)
+                      .style("width", "60%")
+                      .style("height", "auto")
+
+          seg = svg2.selectAll("path")
+          .data(analysis)
+          .enter().append("path")
+          .each(function(d) { d.outerRadius = y(0); })
+          .attr("d", arc)
+          .attr("fill", d => z(d.Category))
+          .attr("note", d => d.Category)
+          .on("mouseover", function(){
+            d3.select(this).style("opacity",0.5);
+          })
+          .on("mouseout", function(){
+            d3.select(this).style("opacity",1);
+          })
+          .on("click", function(){
+            type = d3.select(this).attr("note");
+            createPieChart(pie_data[age+" "+gender][type], type)
+          })
+
+          seg.transition().ease(d3.easeElastic).duration(1500).delay(function(d,i) {return (48-i)*90;})
+                .attrTween("d", function(d,index) {
+                  var i = d3.interpolate(d.outerRadius, y(d.Number));
+                  return function(t) { d.outerRadius = i(t); return arc(d); };
+                });
+
+          xAxis = g => g
+          .attr("text-anchor", "end")
+          .attr("dominant-baseline","central")
+          .call(g => g.selectAll("g")
+          .data(analysis)
+          .enter().append("g")
+          .style("fill","#FFFFFF")
+          .attr("transform", d => `rotate(${((x(d.Category) + x.bandwidth() / 2) * 180 / Math.PI - 90)}) translate(${innerRadius+4},0) rotate(90)`)
+          .call(g => g.append("text")
+          .attr("transform", d =>  "rotate(90) translate(0,0)")
+                .text(d => d.Category)))
+
+          svg2.append("g")
+              .call(xAxis);
+        }
+
+        updateGraph(age+" "+gender, '');
+
+        ageselector.addEventListener("change", function(){
+          age = ageselector[ageselector.selectedIndex].value;
+          if(gender == ''){
+            let tmpkey1 = age + " " + "female";
+            let tmpkey2 = age + " " + "male";
+            updateGraph(tmpkey1, tmpkey2);
+          }
+          else{
+            let tmpkey = age + " " + gender;
+            updateGraph(tmpkey, '');
+          }
+        });
+
+
+        genderselector.addEventListener("change", function(){
+          gender = genderselector[genderselector.selectedIndex].value;
+          if(gender == ''){
+            let tmpkey1 = age + " " + "female";
+            let tmpkey2 = age + " " + "male";
+            updateGraph(tmpkey1, tmpkey2);
+          }
+          else{
+            let tmpkey = age + " " + gender;
+            updateGraph(tmpkey, '');
+          }
+        });
+
+      })
+
     }
 
     requestData();
-    /************/
-  var width = 975;
-  var height = width;
-  var innerRadius = 300;
-  var outerRadius = Math.min(width, height) / 2;
-  var analysis = [];
-  Promise.all([d3.json("./dataset/response.json",d3.autoType),d3.json("./dataset/major.json",d3.autoType)]).then(function (data){
-    console.log(data[0]);//48
-    for(let key in data[0])
-    {
-      if (key == '16 male'){
-        for (let subkey in data[0][key])
-            for (let subtitle in data[0][key][subkey])  
-            analysis.push({
-              "Category": subtitle,
-              "Number": data[0][key][subkey][subtitle]
-            });
-      }
-    }
-    arc = d3.arc()
-             .innerRadius(d => y(0))
-            // .outerRadius(d => y(d.Number))
-            .startAngle(d => x(d.Category))
-            .endAngle(d => x(d.Category) + x.bandwidth())
-            .padAngle(0.01)
-            .padRadius(innerRadius)
-    x = d3.scaleBand()
-          .domain(analysis.map(d => d.Category))
-          .range([0, 2 * Math.PI])
-          .align(0)
-    console.log(x('cars'));
-    y = function(d){
-        const y = d3.scaleLinear()
-                    .domain([0, d3.max(analysis, d => d.Number)])
-                    .range([innerRadius * innerRadius, outerRadius * outerRadius]);
-        return Math.sqrt(y(d));
-    }
-    z = d3.scaleOrdinal()
-          .domain(analysis.map(d => d.Category))
-          .range(["#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5","#98abc5", "#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6","#8a89a6", "#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888","#7b6888", "#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b","#6b486b", "#a05d56", "#d0743c","#d0743c","#d0743c","#d0743c","#d0743c","#d0743c","#d0743c"])
-    console.log(z("cars"));
-    var svg2 = d3.select("#Chart")
-                .attr("viewBox", `${-width / 2} ${-height / 2} ${width} ${height}`)
-                .style("width", "60%")
-                .style("height", "auto")
-    seg = svg2.selectAll("path")
-    .data(analysis)
-    .enter().append("path")
-    .each(function(d) { d.outerRadius = y(0); })
-    .attr("d", arc)
-    .attr("fill", d => z(d.Category));
 
-    seg.transition().ease(d3.easeElastic).duration(1500).delay(function(d,i) {return (48-i)*90;})
-          .attrTween("d", function(d,index) {
-            var i = d3.interpolate(d.outerRadius, y(d.Number));
-            return function(t) { d.outerRadius = i(t); return arc(d); };
-          });
 
-    xAxis = g => g
-    .attr("text-anchor", "end")
-    .attr("dominant-baseline","central")
-    .call(g => g.selectAll("g")
-    .data(analysis)
-    .enter().append("g")
-    .style("fill","#FFFFFF")
-    .attr("transform", d => `rotate(${((x(d.Category) + x.bandwidth() / 2) * 180 / Math.PI - 90)}) translate(${innerRadius+4},0) rotate(90)`)
-    .call(g => g.append("text")
-    .attr("transform", d =>  "rotate(90) translate(0,0)")
-          .text(d => d.Category))) 
 
-    svg2.append("g")
-        .call(xAxis);
-  });
 
 
 

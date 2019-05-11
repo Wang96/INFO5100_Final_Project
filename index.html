@@ -152,12 +152,16 @@
            var yScale=d3.scaleLinear().domain([0.1,0.6]).range([chartHeight,0]);
            var x = d3.scaleLinear().range([0, chartWidth]);
            var y = d3.scaleLinear().range([chartHeight, 0]);
+
+
+           //function createAxis (){
            let leftAxis = d3.axisLeft(yScale).ticks(5).tickFormat(d3.format(".0%"));
 
 
 
            // Y axis
            axis.append("g").attr("class", "y axis")
+           .attr("opacity",0)
            .attr("transform","translate("+ margin.left +","+ margin.top +")")
            .call(leftAxis);
 
@@ -165,26 +169,32 @@
             let bottomAxis = d3.axisBottom(xScale).ticks(5).tickFormat(function(d) { return "$" + d3.format(",")(d) } ); // Making simpler ticks without the e
             // Check out http://bl.ocks.org/zanarmstrong/05c1e95bf7aa16c4768
             let element = axis.append("g").attr("class", "x axis")
+            .attr("opacity",0)
             .attr("transform","translate("+ margin.left +","+ (margin.top + chartHeight ) +")");
             bottomAxis(element); // Same as .call
 
             axis.append("text")
+            .attr("class", "transparent")
+            .attr("opacity",0)
             .attr("transform",
             "translate("+width/2+","+(chartHeight+margin.top+40)+")")
             .style("text-anchor", "middle")
             .text("Salary")
             .style("font-size", 14)
             .style("fill", "black")
-            // .style("opacity",0.75);
+          
 
             axis.append("text")
+            .attr("class", "transparent")
+            .attr("opacity",0)
             .attr("transform", "rotate(-90)")
             .attr("y", margin.left - 50)
             .attr("x",0 - (height / 2))
             .text("Percentage")
             .style("font-size", 14)
             .style("fill", "black")
-            // .style("opacity",0.75);
+ 
+           
 
             var majordrop = d3.select("#majordropdown")
 
@@ -210,23 +220,49 @@
                               return d.major == major;
                             })
                 console.log(selectMajor);
+
+                // naming variables for graphing //
                 var selectValues = selectMajor[0]["values"];
                 var format= d3.format(",")
+
+                // min- 10th percentile
+                var min = selectValues[0];
+                var minComma = format(min);
+                var minX = xScale(min);
+
+                //25th percentile
+                var quarter = selectValues[1];
+                var quarterComma = format(quarter);
+                var quarterX = xScale(quarter);
+
+                // median
                 var median = d3.median(selectValues);
                 var medianComma = format(d3.median(selectValues));
                 var medianX = xScale(median);
+                
+                // 75th percentile
+                var fourth= selectValues[3];
+                var fourthComma = format(fourth);
+                var fourthX = xScale(fourth);
+              
+                // 90th percentile
+                var max = selectValues[4];
+                var maxComma = format(max);
+                var maxX = xScale(max);
 
-                console.log(medianX)
-                var percenty = yScale(0.50);
+                console.log(maxX);
+                console.log( "SelectValues=" + selectValues[0]);
+
+                var tenthY = yScale(0.10);
+                console.log(tenthY)
+                var quarterY = yScale(0.25);
+                var medianY = yScale(0.50);
 
                 var line = d3.line()
                  .x(function(d,i) { return xScale(d); })
                  .y(function(d,i) { return yScale(percents[i]); })
                  .curve(d3.curveStepBefore)
                  .curve(d3.curveCatmullRom.alpha(1));
-
-
-
 
                 var g = axis.append("g").attr("class", "linedots");
 
@@ -247,7 +283,6 @@
                   return "hsl(" + Math.random() * 360 + ",40%,50%)";
                 }
 
-
                   d3.selectAll(".line")
                   .style("stroke", randomColor)
                   .transition()
@@ -264,27 +299,63 @@
                  focus.append("line")
                      .attr("class", "hover-line")
                      .attr("y1", yScale(0.10))
-                     .attr("y2", percenty)
-                     .attr("x1", xScale(median))
-                     .attr("x2", xScale(median))
+                     .attr("y2", medianY)
+                     .attr("x1", medianX)
+                     .attr("x2", medianX)
                      .style("stroke", "grey")
                      .attr("transform","translate("+margin.left+","+margin.top+")");
 
                 focus.append("text")
-                .attr("class", "mediantext")
-                .attr("x", xScale(median)-15)
-                .attr("y", percenty - 20)
-                .text("Median Mid-Career Salary:")
-                .attr("fill","black")
-                .attr("font-size",14)
+                    .attr("class", "mediantext")
+                    .attr("x", medianX-15)
+                    .attr("y", medianY - 20)
+                    .text("Median Mid-Career Salary:")
+                    .attr("fill","black")
+                    .attr("font-size",14)
 
                 focus.append("text")
-                .attr("class", "median")
-                .attr("x", xScale(median)+28)
-                .attr("y", percenty+ 10)
-                .text("$" + medianComma)
-                .attr("fill","black")
-                .attr("font-size",22)
+                    .attr("class", "median")
+                    .attr("x", medianX+28)
+                    .attr("y", medianY+ 10)
+                    .text("$" + medianComma)
+                    .attr("fill","black")
+                    .attr("font-size",22)
+
+                var scatter = g.append("g").attr("class", "dots")
+
+                let circle = scatter.append("circle")
+                    .attr("cx", minX)
+                    .attr("cy", tenthY)
+                    .attr("r", 5)
+                    .attr("fill", "white")
+                    .attr("stroke", "black")
+                    .attr("transform","translate("+margin.left+","+margin.top+")");
+
+              circle.on("mouseover", function() {
+                // console.log(d3.select(this));
+                d3.select(this)
+                  .transition().duration(100)
+                  .attr("r", 10);
+        
+  //       scatter1.append("text")
+  //     .attr("class", "humiditytext")
+  //     .attr("x", time )
+  //     .attr("y", val - 10 )
+  //     .style("font-color","darkgrey")
+  //     .style("font-size",14)
+  //     .text(d['humidity']);
+
+
+  //   });
+
+    circle.on("mouseout", function() {
+      d3.select(this)
+        .transition().duration(100)
+        .attr("r", 5);
+     // d3.select(".humiditytext").remove();
+    });
+
+   });
 
                };
 
@@ -293,6 +364,9 @@
             var clear2 = d3.select(".hover-line").remove();
             var clear3 = d3.select(".median").remove();
             var clear4 = d3.select(".mediantext").remove();
+            var clear5 = d3.selectAll(".transparent").attr("opacity",1)
+            var clear6 = d3.selectAll(".axis").attr("opacity",1)
+            //createAxis();
             var selectedMajor = d3.select(this)
                         .select("select")
                         .property("value");
@@ -320,6 +394,7 @@
 
 
       ageselector.addEventListener("change", function(){
+
         age = ageselector[ageselector.selectedIndex].value;
         if(gender == ''){
           let tmpkey1 = age + " " + "female";
@@ -331,16 +406,17 @@
             let v = (female[i].value + male[i].value) / 2;
             tmpdata.push({"category": female[i].category, "value": v});
           }
-          createPieChart(tmpdata, type);
+         // createPieChart(tmpdata, type);
         }
         else{
           let tmpkey = age + " " + gender;
-          createPieChart(pie_data[tmpkey][type], type);
+          //createPieChart(pie_data[tmpkey][type], type);
         }
       });
 
 
       genderselector.addEventListener("change", function(){
+        
         gender = genderselector[genderselector.selectedIndex].value;
         if(gender == ''){
           let tmpkey1 = age + " " + "female";
@@ -352,16 +428,16 @@
             let v = (female[i].value + male[i].value) / 2;
             tmpdata.push({"category": female[i].category, "value": v});
           }
-          createPieChart(tmpdata, type);
+          //createPieChart(tmpdata, type);
         }
         else{
           let tmpkey = age + " " + gender;
-          createPieChart(pie_data[tmpkey][type], type);
+          //createPieChart(pie_data[tmpkey][type], type);
         }
       });
 
 
-      // Creat pie chart of energy breakdown for selected state
+      // Creat pie chart 
 
       var color = d3.scaleOrdinal(d3.schemePastel1);
       var catmapping = {'1': "one", '2': "two", '3': "three", '4': "four", '5': "five"};
@@ -370,9 +446,8 @@
         var tmp = {}
 
         d3.select('#piechart').selectAll('g').remove();
-
-
         d3.select('#piechart').selectAll('g').remove();
+        
         data.forEach( d => {
           tmp[d.category] = d.value;
         })
@@ -415,8 +490,8 @@
             d3.select("#" + catmapping[category]).remove();
             d3.select("#category_value").remove();
           });
-      }
-      createPieChart(pie_data[age+" "+gender][type], type);
+      
+      //createPieChart(pie_data[age+" "+gender][type], type);
 
       var legend = d3.select("#legend")
       for(let i = 0; i < pie_data[age+" "+gender][type].length; i++){
@@ -434,6 +509,7 @@
               .style("fill", "black");
               //.style("font-weight", "bold");
       }
+      }
 
       /********************************************************/
       var width = 975;
@@ -447,7 +523,7 @@
         console.log(data[0]);//48
 
         function updateGraph(inputkey, second_key){
-          d3.select("#Chart").selectAll("*").remove();
+          d3.select("#Chart").selectAll("path").remove();
 
           if(second_key == ''){
             for(let key in data[0])
@@ -510,6 +586,7 @@
           .data(analysis)
           .enter().append("path")
           .each(function(d) { d.outerRadius = y(0); })
+          .attr("class", "bargraph")
           .attr("d", arc)
           .attr("fill", d => z(d.Category))
           .attr("note", d => d.Category)
@@ -546,9 +623,10 @@
               .call(xAxis);
         }
 
-        updateGraph(age+" "+gender, '');
+        //updateGraph(age+" "+gender, '');
 
         ageselector.addEventListener("change", function(){
+          var removeAge = d3.select(".bargraph").remove();
           age = ageselector[ageselector.selectedIndex].value;
           if(gender == ''){
             let tmpkey1 = age + " " + "female";
@@ -563,6 +641,7 @@
 
 
         genderselector.addEventListener("change", function(){
+          var removeAge = d3.select(".bargraph").remove();
           gender = genderselector[genderselector.selectedIndex].value;
           if(gender == ''){
             let tmpkey1 = age + " " + "female";

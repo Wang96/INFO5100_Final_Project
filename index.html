@@ -231,7 +231,7 @@
 </head>
 
 <body>
-  <p id = "title">Predict your Life</p>
+  <p id = "title">Statistics of your Life</p>
   <p id = "subtitle">See how people like you live</p>
 <div id ="RadiusChart">
   <div id = "Selectors">
@@ -270,7 +270,7 @@
               </select>  
         </div>
         <div class = "SelectText" style="width:100%;">
-            <p class = "SelectAge"> Radius Chart Legends: </br>/*Radius Chart is clickable*/</p>
+            <p class = "SelectAge"> Radius Chart Categories: </br>/*Radius Chart is clickable*/</p>
         </div>
         <svg id="legendforChart" height=80% width=15%>
           </svg>
@@ -285,7 +285,7 @@
 <div id="line">
   <div id = "Selectors">
       <div class = "SelectText" style="width:100%;">
-          <p class = "SelectAge"> Select Your Undergraduate Major: </p>
+          <p class = "SelectAge"> Select Your (potential) Major: </p>
       </div>
       <div class="custom-select" style="width:100%;" >
           <select id="major">
@@ -554,7 +554,7 @@
             .attr("x", 0)
             .attr("y", 7 * 30 + 50)
             .attr("height", 25)
-            .text("Donut Chart Legends:")
+            .text("Donut Chart Categories:")
             .style("font-size", "1vw")
             .style("fill", "#FFF");
         for (let i = 9; i < pie_data[age + " " + gender][type].length+9; i++) {
